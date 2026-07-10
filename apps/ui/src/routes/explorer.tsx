@@ -17,6 +17,7 @@ import { ListShell, LoadMore } from "@/components/metagraphed/list-shell";
 import { SearchInput } from "@/components/metagraphed/table-controls";
 import { TimeAgo } from "@/components/metagraphed/time-ago";
 import {
+  blocksQuery,
   chainActivityQuery,
   chainCallsQuery,
   chainEventsInfiniteQuery,
@@ -81,6 +82,35 @@ function fmtTaoSigned(v: number): string {
   return v < 0 ? `-${formatTao(-v)}` : `+${formatTao(v)}`;
 }
 
+/**
+ * #3373: compact chain-head tip in the explorer hero — "head #NNNN · N ago"
+ * from /api/v1/blocks (limit 1). Twin of the home ChainHeadTip (#3372). Plain
+ * useQuery so a cold/failed fetch renders a placeholder and never blocks the
+ * rest of the page.
+ */
+function ChainHeadTip() {
+  const { data } = useQuery(blocksQuery({ limit: 1 }));
+  const head = data?.data?.[0];
+  if (!head || head.block_number == null) {
+    return (
+      <span className="inline-flex items-center gap-1.5 font-mono text-[11px] text-ink-muted">
+        <span className="mg-live-dot" />
+        head —
+      </span>
+    );
+  }
+  return (
+    <Link
+      to="/blocks/$ref"
+      params={{ ref: String(head.block_number) }}
+      className="inline-flex items-center gap-1.5 font-mono text-[11px] text-ink-muted transition-colors hover:text-accent"
+    >
+      <span className="mg-live-dot" />
+      head #{formatNumber(head.block_number)} · <TimeAgo at={head.observed_at} />
+    </Link>
+  );
+}
+
 function ExplorerPage() {
   return (
     <AppShell>
@@ -89,7 +119,12 @@ function ExplorerPage() {
         live
         title="Chain explorer"
         description="The Bittensor network at a glance — daily activity, fees, call mix, and the most active accounts, computed live from the chain-direct tiers."
-        actions={<ShareButton />}
+        actions={
+          <div className="flex flex-col items-start gap-3">
+            <ShareButton />
+            <ChainHeadTip />
+          </div>
+        }
       />
       <QueryErrorBoundary>
         <Suspense fallback={<Skeleton className="h-[40rem] w-full" />}>
@@ -99,6 +134,7 @@ function ExplorerPage() {
       <ChainEventsFeedSection />
       <ApiSourceFooter
         paths={[
+          "/api/v1/blocks",
           "/api/v1/chain/activity",
           "/api/v1/chain/fees",
           "/api/v1/chain/calls",
