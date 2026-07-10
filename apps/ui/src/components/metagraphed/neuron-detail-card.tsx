@@ -4,6 +4,7 @@ import { Coins, Flame, Award, Server, X } from "lucide-react";
 import { subnetNeuronQuery } from "@/lib/metagraphed/queries";
 import { StatTile } from "@/components/metagraphed/charts/stat-tile";
 import { TableState } from "@/components/metagraphed/table-state";
+import { FreshnessBadge } from "@/components/metagraphed/freshness-badge";
 import { taoCompact } from "@/components/metagraphed/neuron-table";
 import { shortHash } from "@/lib/metagraphed/blocks";
 import { formatNumber } from "@/lib/metagraphed/format";
@@ -45,7 +46,7 @@ export function NeuronDetailCard({
 
   return (
     <div className="space-y-4 rounded-xl border border-border bg-surface/30 p-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-baseline gap-2">
           <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-ink-muted">
             Neuron
@@ -64,16 +65,20 @@ export function NeuronDetailCard({
             </span>
           ) : null}
         </div>
-        {onClose ? (
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close neuron detail"
-            className="inline-flex items-center gap-1 rounded border border-border bg-card px-2 py-1 text-[10px] font-mono uppercase tracking-wider text-ink-muted hover:text-ink-strong"
-          >
-            <X className="size-3" aria-hidden /> Close
-          </button>
-        ) : null}
+        <div className="flex items-center gap-2">
+          {/* #3379: loaded-state must surface meta.generated_at as daily rollup */}
+          <FreshnessBadge at={meta?.generated_at} tier="daily" />
+          {onClose ? (
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close neuron detail"
+              className="inline-flex items-center gap-1 rounded border border-border bg-card px-2 py-1 text-[10px] font-mono uppercase tracking-wider text-ink-muted hover:text-ink-strong"
+            >
+              <X className="size-3" aria-hidden /> Close
+            </button>
+          ) : null}
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
