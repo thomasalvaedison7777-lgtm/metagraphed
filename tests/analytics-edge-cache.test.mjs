@@ -400,11 +400,34 @@ describe("analytics edge cache", () => {
   });
 
   test("stake-flow canonicalizes omitted and explicit default window to the same cache key", async () => {
+    // Postgres-unavailable stake-flow stubs are intentionally not edge-cached
+    // (#6012); exercise the canonical key on a successful account_events tier.
     originalCaches = globalThis.caches;
     const cache = mockCaches();
     cache.install();
-    const queries = [];
-    const env = analyticsEnv(queries);
+    const dataApiCalls = [];
+    const env = {
+      ...analyticsEnv([]),
+      METAGRAPH_ACCOUNT_EVENTS_SOURCE: "postgres",
+      DATA_API: {
+        async fetch(request) {
+          dataApiCalls.push(request.url);
+          return Response.json({
+            data: {
+              schema_version: 1,
+              netuid: 7,
+              window: "30d",
+              total_staked_tao: 0,
+              total_unstaked_tao: 0,
+              net_flow_tao: 0,
+              stake_events: 0,
+              unstake_events: 0,
+            },
+            generatedAt: LAST_RUN_AT,
+          });
+        },
+      },
+    };
 
     // No ?window — should resolve to the 30d default and cache at ?window=30d.
     const first = await handleRequest(
@@ -414,9 +437,10 @@ describe("analytics edge cache", () => {
     );
     await Promise.resolve();
     assert.equal(first.status, 200);
-    const queriesAfterMiss = queries.length;
+    const callsAfterMiss = dataApiCalls.length;
+    assert.equal(callsAfterMiss, 1);
 
-    // Explicit ?window=30d is the canonical form — must be a cache HIT (no new D1).
+    // Explicit ?window=30d is the canonical form — must be a cache HIT (no DATA_API).
     const hit = await handleRequest(
       new Request(
         "https://api.metagraph.sh/api/v1/subnets/7/stake-flow?window=30d",
@@ -426,9 +450,9 @@ describe("analytics edge cache", () => {
     );
     assert.equal(hit.status, 200);
     assert.equal(
-      queries.length,
-      queriesAfterMiss,
-      "explicit ?window=30d must be a cache HIT (no D1 queries)",
+      dataApiCalls.length,
+      callsAfterMiss,
+      "explicit ?window=30d must be a cache HIT (no DATA_API fetches)",
     );
 
     assert.deepEqual(cache.putKeys, [
@@ -971,12 +995,8 @@ describe("analytics edge cache", () => {
     );
     const routeUrl = new URL(request.url);
 
-    const res = await withEdgeCache(
-      request,
-      ctx,
-      env,
-      "blocks-summary",
-      () => handleBlocksSummary(request, env, routeUrl),
+    const res = await withEdgeCache(request, ctx, env, "blocks-summary", () =>
+      handleBlocksSummary(request, env, routeUrl),
     );
     await Promise.resolve();
 
