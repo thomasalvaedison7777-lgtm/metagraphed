@@ -27681,6 +27681,28 @@
           },
           {
             "in": "query",
+            "name": "id",
+            "required": false,
+            "schema": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "confidence",
+            "required": false,
+            "schema": {
+              "enum": [
+                "low",
+                "medium",
+                "high"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
             "name": "fields",
             "required": false,
             "schema": {
@@ -43876,6 +43898,28 @@
           },
           {
             "in": "query",
+            "name": "id",
+            "required": false,
+            "schema": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "confidence",
+            "required": false,
+            "schema": {
+              "enum": [
+                "low",
+                "medium",
+                "high"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
             "name": "fields",
             "required": false,
             "schema": {
@@ -50302,6 +50346,15 @@
           },
           {
             "in": "query",
+            "name": "id",
+            "required": false,
+            "schema": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
             "name": "fields",
             "required": false,
             "schema": {
@@ -52603,6 +52656,15 @@
           {
             "in": "query",
             "name": "provider",
+            "required": false,
+            "schema": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "id",
             "required": false,
             "schema": {
               "maxLength": 100,
